@@ -29,7 +29,7 @@ public class LoginController extends HttpServlet {
 		//Check session
 		HttpSession session = req.getSession(false);
 		if (session != null && session.getAttribute("account") != null) {
-			resp.sendRedirect(req.getContextPath() + "/admin/category/list");
+			resp.sendRedirect(req.getContextPath() + "/admin/home");
 			return;
 		}
 		
@@ -40,7 +40,7 @@ public class LoginController extends HttpServlet {
 	            if (cookie.getName().equals("username")) {
 	                session = req.getSession(true);
 	                session.setAttribute("username", cookie.getValue());
-	                resp.sendRedirect(req.getContextPath() + "/admin/category/list");
+	                resp.sendRedirect(req.getContextPath() + "/admin/home");
 	                return;
 	            }
 	        }
@@ -76,7 +76,7 @@ public class LoginController extends HttpServlet {
 			if (isRememberMe) {
 				saveRemeberMe(resp, username);
 			}
-			resp.sendRedirect(req.getContextPath() + "/admin/category/list");
+			resp.sendRedirect(req.getContextPath() + "/admin/home");
 		} else {
 			alertMsg = "Tài khoản hoặc mật khẩu không đúng";
 			req.setAttribute("alert", alertMsg);

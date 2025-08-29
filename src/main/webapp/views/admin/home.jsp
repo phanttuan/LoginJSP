@@ -15,12 +15,18 @@
     <div class="user-info">
         Xin chào, <%= username %>
         <% if (user != null) { %>
-            <!-- Sửa đường dẫn tuyệt đối đến /logout -->
+            <!-- Nút đăng xuất -->
             <form action="<%=request.getContextPath()%>/logout" method="get" style="display:inline;">
                 <button type="submit" style="color: white; background: #d9534f; padding: 6px 12px; border-radius: 4px; border:none; margin-left: 10px; cursor:pointer;">
                     Đăng xuất
                 </button>
             </form>
+            <!-- Nút chuyển qua trang Category -->
+            <a href="<%=request.getContextPath()%>/admin/category/list">
+                <button type="button" style="color: white; background: #5cb85c; padding: 6px 12px; border-radius: 4px; border:none; margin-left: 10px; cursor:pointer;">
+                    Quản lý Category
+                </button>
+            </a>
         <% } %>
     </div>
     <h2>Chào mừng <%= username %>!</h2>
