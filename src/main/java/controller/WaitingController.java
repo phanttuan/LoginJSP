@@ -27,7 +27,7 @@ public class WaitingController extends HttpServlet {
 				resp.sendRedirect(req.getContextPath() + "/home");
 			}
 		} else {
-			resp.sendRedirect(req.getContextPath() + "/login");
+			resp.sendRedirect(req.getContextPath() + "/Login");
 		}
 	}
 }
