@@ -21,7 +21,7 @@ public class ResetPasswordController extends HttpServlet {
         String token = req.getParameter("token");
         
         if (token == null || token.isEmpty()) {
-            resp.sendRedirect("login"); // Nếu không có token, chuyển về trang login
+            resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
         

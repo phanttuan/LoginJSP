@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,8 +19,8 @@
                         <% if(request.getAttribute("alert") != null) { %>
                             <div class="alert alert-warning"><%= request.getAttribute("alert") %></div>
                         <% } %>
-                        <form action="reset-password" method="post">
-                            <input type="hidden" name="token" value="<%= request.getParameter("token") %>" />
+                        <form action="<c:url value='/reset-password'/>" method="post">
+                            <input type="hidden" name="token" value="${not empty requestScope.token ? requestScope.token : param.token}" />
                             <div class="mb-3">
                                 <label for="password" class="form-label">Mật khẩu mới:</label>
                                 <input type="password" class="form-control" id="password" name="password" required>

@@ -1,5 +1,5 @@
 package model;
 
 public class Constant {
-	public static final String DIR = "E:\\upload";
+	public static final String DIR = "F:\\upload";
 }

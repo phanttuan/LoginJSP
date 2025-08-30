@@ -1,67 +1,106 @@
 package controller;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
+import java.io.InputStream;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 
 import model.Category;
 import model.Constant;
+import model.User;
 import service.CategoryService;
 import service.CategoryServiceImpl;
 
+@MultipartConfig
 @WebServlet(urlPatterns = { "/admin/category/add" })
 public class CategoryAddController extends HttpServlet {
-	CategoryService cateService = new CategoryServiceImpl();
+    CategoryService cateService = new CategoryServiceImpl();
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		RequestDispatcher dispatcher = req.getRequestDispatcher("/views/admin/add-category.jsp");
-		dispatcher.forward(req, resp);
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Kiểm tra quyền hạn người dùng
+        HttpSession session = req.getSession();
+        if (session != null && session.getAttribute("account") != null) {
+            User user = (User) session.getAttribute("account");
+            // Chỉ admin (roleid=1) mới có quyền thêm danh mục
+            if (user.getRoleid() == 1) {
+                RequestDispatcher dispatcher = req.getRequestDispatcher("/views/admin/add-category.jsp");
+                dispatcher.forward(req, resp);
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/waiting");
+            }
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/Login");
+        }
+    }
 
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		Category category = new Category();
-		DiskFileItemFactory diskFileItemFactory = new DiskFileItemFactory();
-		ServletFileUpload servletFileUpload = new ServletFileUpload(diskFileItemFactory);
-		servletFileUpload.setHeaderEncoding("UTF-8");
-		try {
-			resp.setContentType("text/html");
-			resp.setCharacterEncoding("UTF-8");
-			req.setCharacterEncoding("UTF-8");
-			List<FileItem> items = servletFileUpload.parseRequest(req);
-			for (FileItem item : items) {
-				if (item.getFieldName().equals("name")) {
-					category.setCatename(item.getString("UTF-8"));
-				} else if (item.getFieldName().equals("icon")) {
-					String originalFileName = item.getName();
-					int index = originalFileName.lastIndexOf(".");
-					String ext = originalFileName.substring(index + 1);
-					String fileName = System.currentTimeMillis() + "." + ext;
-					File file = new File(Constant.DIR + "/category/" + fileName);
-					item.write(file);
-					category.setIcon("category/" + fileName);
-				}
-			}
-			cateService.insert(category);
-			resp.sendRedirect(req.getContextPath() + "/admin/category/list");
-		} catch (FileUploadException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Kiểm tra quyền hạn người dùng
+        HttpSession session = req.getSession();
+        if (session != null && session.getAttribute("account") != null) {
+            User user = (User) session.getAttribute("account");
+            // Chỉ admin (roleid=1) mới có quyền thêm danh mục
+            if (user.getRoleid() == 1) {
+                Category category = new Category();
+                try {
+                    resp.setContentType("text/html");
+                    resp.setCharacterEncoding("UTF-8");
+                    req.setCharacterEncoding("UTF-8");
+
+                    // Read form fields directly via Servlet API
+                    String name = req.getParameter("name");
+                    if (name != null) {
+                        category.setCatename(name);
+                    }
+
+                    Part iconPart = req.getPart("icon");
+                    if (iconPart != null && iconPart.getSize() > 0) {
+                        String submitted = iconPart.getSubmittedFileName();
+                        String fileName = null;
+                        if (submitted != null && !submitted.isEmpty()) {
+                            int dot = submitted.lastIndexOf('.');
+                            String ext = dot >= 0 ? submitted.substring(dot + 1) : "";
+                            fileName = System.currentTimeMillis() + (ext.isEmpty() ? "" : "." + ext);
+                        } else {
+                            fileName = String.valueOf(System.currentTimeMillis());
+                        }
+
+                        File destDir = new File(Constant.DIR, "category");
+                        if (!destDir.exists()) destDir.mkdirs();
+                        File destFile = new File(destDir, fileName);
+
+                        try (InputStream in = iconPart.getInputStream(); FileOutputStream out = new FileOutputStream(destFile)) {
+                            byte[] buf = new byte[8192];
+                            int r;
+                            while ((r = in.read(buf)) != -1) {
+                                out.write(buf, 0, r);
+                            }
+                        }
+                        category.setIcon("category/" + fileName);
+                    }
+
+                    cateService.insert(category);
+                    resp.sendRedirect(req.getContextPath() + "/admin/category/list");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new ServletException(e);
+                }
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/waiting");
+            }
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/Login");
+        }
+    }
 }
